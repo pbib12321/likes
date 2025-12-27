@@ -4,44 +4,39 @@ import fetch from "node-fetch";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/*
-  GET /game-stats/:placeId
-  Example:
-  /game-stats/92646770282556
-*/
+/* ✅ ROOT TEST */
+app.get("/", (req, res) => {
+	res.send("Render server is running ✅");
+});
+
+/* ✅ GAME STATS ROUTE */
 app.get("/game-stats/:placeId", async (req, res) => {
 	try {
 		const placeId = req.params.placeId;
 
-		const robloxRes = await fetch(
+		const r = await fetch(
 			`https://games.roblox.com/v1/games?placeIds=${placeId}`
 		);
 
-		if (!robloxRes.ok) {
-			return res.status(500).json({ error: "Roblox API error" });
-		}
-
-		const json = await robloxRes.json();
-		const game = json?.data?.[0];
+		const j = await r.json();
+		const game = j?.data?.[0];
 
 		if (!game) {
 			return res.status(404).json({ error: "Game not found" });
 		}
 
-		// Always fresh data
 		res.json({
-			placeId: placeId,
+			placeId,
 			likes: game.upVotes,
 			dislikes: game.downVotes,
 			favorites: game.favoritedCount,
-			visits: game.visits,
-			timestamp: Date.now()
+			visits: game.visits
 		});
 	} catch (err) {
-		res.status(500).json({ error: "Server failure" });
+		res.status(500).json({ error: "Server error" });
 	}
 });
 
 app.listen(PORT, () => {
-	console.log("Roblox stats proxy running on port", PORT);
+	console.log("Server running on port", PORT);
 });
