@@ -4,34 +4,35 @@ import fetch from "node-fetch";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Root route to test service
 app.get("/", (req, res) => {
-  res.send("Render server is running ✅");
+  res.send("Server running");
 });
 
-// Game stats route
-app.get("/game-stats/:placeId", async (req, res) => {
+app.get("/votes/:universeId", async (req, res) => {
   try {
-    const placeId = req.params.placeId;
+    const universeId = req.params.universeId;
 
-    const robloxRes = await fetch(`https://games.roblox.com/v1/games?placeIds=${placeId}`);
-    const json = await robloxRes.json();
-    const game = json?.data?.[0];
+    const response = await fetch(
+      `https://games.roblox.com/v1/games/votes?universeIds=${universeId}`
+    );
 
-    if (!game) {
-      return res.status(404).json({ error: "Game not found" });
+    const json = await response.json();
+    
+    if (!json.data || json.data.length === 0) {
+      return res.status(404).json({ error: "No vote data found" });
     }
 
-    res.json({
-      placeId,
-      likes: game.upVotes,
-      dislikes: game.downVotes,
-      favorites: game.favoritedCount,
-      visits: game.visits
+    return res.json({
+      upVotes: json.data[0].upVotes,
+      downVotes: json.data[0].downVotes,
     });
-  } catch (err) {
+  } catch (error) {
     res.status(500).json({ error: "Server error" });
   }
+});
+
+app.listen(PORT, () => {
+  console.log("Listening on port", PORT);
 });
 
 app.listen(PORT, () => {
