@@ -4,39 +4,45 @@ import fetch from "node-fetch";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ✅ ROOT TEST */
+// Root route for testing
 app.get("/", (req, res) => {
 	res.send("Render server is running ✅");
 });
 
-/* ✅ GAME STATS ROUTE */
+// Game stats route
 app.get("/game-stats/:placeId", async (req, res) => {
 	try {
 		const placeId = req.params.placeId;
 
-		const r = await fetch(
+		const robloxRes = await fetch(
 			`https://games.roblox.com/v1/games?placeIds=${placeId}`
 		);
 
-		const j = await r.json();
-		const game = j?.data?.[0];
+		if (!robloxRes.ok) {
+			return res.status(500).json({ error: "Roblox API error" });
+		}
+
+		const data = await robloxRes.json();
+		const game = data?.data?.[0];
 
 		if (!game) {
 			return res.status(404).json({ error: "Game not found" });
 		}
 
 		res.json({
-			placeId,
+			placeId: placeId,
 			likes: game.upVotes,
 			dislikes: game.downVotes,
 			favorites: game.favoritedCount,
-			visits: game.visits
+			visits: game.visits,
+			timestamp: Date.now()
 		});
 	} catch (err) {
 		res.status(500).json({ error: "Server error" });
 	}
 });
 
+// Start server
 app.listen(PORT, () => {
-	console.log("Server running on port", PORT);
+	console.log("Render Roblox proxy running on port", PORT);
 });
